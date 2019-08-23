@@ -13,7 +13,9 @@ var isAuthenticated = require("../config/middleware/isAuthenticated");
 // =============================================================
 
   
-  
+const fs = require("fs");
+const path = require("path");
+const fse = require('fs-extra');
 
 
 
@@ -80,21 +82,84 @@ module.exports = function(app) {
     }
   });
 
+  // NEw CODING FOR RONNIE PROJECT
 
   app.post("/api/submit", isAuthenticated, function(req, res) {
     console.log(req.body);
+    console.log("post submitted");
     db.PlaneInput.create({
-      serial: req.body.serial,
-      make: req.body.make,
-      model: req.body.model,
-      UserId: req.user.id
-    }).then(function() {
-      res.json("/memberData");
-    }).catch(function(err) {
-      console.log(err);
-      res.json(err);
-      // res.status(422).json(err.errors[0].message);
+        serial: req.body.serial,
+        make: req.body.make,
+        model: req.body.model,
+        UserId: req.user.id
+      }).then(function() {
+        res.json("/memberData");
+      }).catch(function(err) {
+        console.log(err);
+        res.json(err);
+        // res.status(422).json(err.errors[0].message);
+      });
+
+      var dirName = `${req.body.make} ${req.body.model} ${req.body.serial} `
+      
+      fs.mkdir(dirName, { recursive: true }, (err) => {
+        if (err) throw err;
+      });
+
+    const create = (dir, structure, cb = null) => {
+        cb = (cb => (...a) => setTimeout(() => cb.apply(null, a)))(cb);
+        const subdirs = Reflect.ownKeys(structure);
+      
+        console.log(subdirs);
+
+        if (subdirs.length) {
+          const sub = subdirs[0];
+          const pth = path.join(dir, sub);
+          const subsub = structure[sub];
+          const copy = Object.assign({}, structure);
+          delete copy[sub];
+      
+          fs.mkdir(pth, err => {
+            if (err) return cb(err);
+            create(pth, subsub, err => {
+              if (err) return cb(err);
+              create(dir, copy, cb);
+            });
+          });
+        } else {
+          cb(null);
+        }
+      };
+      console.log (create)
+
+      const structure = {
+        "8110-3": {},
+        "CAD FILES": {},
+        PDFs: {
+          SHEETS: {},
+          OBSOLETE: {}
+        },
+        MANUALS: {},
+        "P.Os": {},
+        "CUSTOMER PRINTS": {},
+        NOTES: {},
+        PICTURES: {
+          "COMPLETED INSTALLS": {},
+          "PRE INSTALLS": {},
+          "IN PROGRESS INSTALLS": {},
+          MISC: {}
+        }
+      };
+      // var dirName = `${req.body.make} ${req.body.model} ${req.body.serial} `
+        // var dirName = 'Bell429 3299238749'
+      var desktopPath="C:\Users\tyler\Desktop"  
+
+    create(dirName, structure, err => {
+      if (err) console.log(err);
+      else console.log("Success");
     });
+
+ 
   });
 
   app.get("/api/allPlaneData", isAuthenticated, function(req, res) {

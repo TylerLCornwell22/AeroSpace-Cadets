@@ -4,6 +4,8 @@ $(document).ready(function(){
         type: 'get',
         dataType: 'json',
         success:function(response){
+            console.log("I have run")
+            console.log(response)
   
             var len = response.length;
   
